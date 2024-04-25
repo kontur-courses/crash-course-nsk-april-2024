@@ -1,4 +1,5 @@
 ﻿using Market.DAL.Repositories;
+using Market.DAL.Repositories.Orders;
 using Market.DTO;
 using Market.Misc;
 using Market.Models;
@@ -20,7 +21,7 @@ public class OrdersControllers : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] OrderDto order)
     {
-        var result = await OrdersRepository.CreateOrderAsync(new Order()
+        await OrdersRepository.CreateOrderAsync(new Order
         {
             Id = order.Id,
             State = OrderState.Created,
@@ -29,28 +30,20 @@ public class OrdersControllers : ControllerBase
             SellerId = order.SellerId
         });
 
-        return ParserDbResult.DbResultIsSuccessful(result, out var error)
-            ? Ok()
-            : error;
+        return Ok();
     }
 
     [HttpPost("{orderId:guid}/set-state")]
     public async Task<IActionResult> SetState([FromRoute] Guid orderId, [FromBody] OrderState state)
     {
-        var result = await OrdersRepository.ChangeStateForOrder(orderId, state);
-
-        return ParserDbResult.DbResultIsSuccessful(result, out var error)
-            ? Ok()
-            : error;
+        await OrdersRepository.ChangeStateForOrder(orderId, state);
+        return Ok();
     }
 
     [HttpGet("{sellerId:guid}")]
-    public async Task<IActionResult> GetOrders([FromRoute] Guid sellerId, [FromQuery] bool onlyCreated,
-        [FromQuery] bool all)
+    public async Task<ActionResult<List<OrderDto>>> GetOrders([FromRoute] Guid sellerId, [FromQuery] bool onlyCreated)
     {
-        var result = await OrdersRepository.GetOrdersForSeller(sellerId, onlyCreated, all);
-
-        var orderDtos = result.Result.Select(OrderDto.FromModel);
-        return new JsonResult(orderDtos);
+        var orders = await OrdersRepository.GetOrdersForSeller(sellerId, onlyCreated);
+        return orders.Select(OrderDto.FromModel).ToList();
     }
 }

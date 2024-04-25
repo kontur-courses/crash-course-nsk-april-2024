@@ -1,7 +1,8 @@
-﻿using Market.Models;
+﻿using Market.Exceptions;
+using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Market.DAL.Repositories;
+namespace Market.DAL.Repositories.Orders;
 
 internal class OrdersRepository
 {
@@ -12,54 +13,47 @@ internal class OrdersRepository
         _context = new RepositoryContext();
     }
 
-    public async Task<DbResult> CreateOrderAsync(Order order)
+    public async Task CreateOrderAsync(Order order)
     {
         try
         {
             await _context.Orders.AddAsync(order);
             await _context.SaveChangesAsync();
-
-            return new DbResult(DbResultStatus.Ok);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            throw ErrorRegistry.InternalServerError();
         }
     }
 
-    public async Task<DbResult> ChangeStateForOrder(Guid orderId, OrderState newState)
+    public async Task ChangeStateForOrder(Guid orderId, OrderState newState)
     {
         var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order is null)
-            return new DbResult(DbResultStatus.NotFound);
+            throw ErrorRegistry.NotFound("order", orderId);
 
         order.State = newState;
 
         try
         {
             await _context.SaveChangesAsync();
-            return new DbResult(DbResultStatus.Ok);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            throw ErrorRegistry.InternalServerError();
         }
     }
 
-    public async Task<DbResult<IReadOnlyCollection<Order>>> GetOrdersForSeller(Guid sellerId, bool onlyCreated,
-        bool all)
+    public async Task<IReadOnlyCollection<Order>> GetOrdersForSeller(Guid sellerId, bool onlyCreated)
     {
         var query = _context.Orders.Where(o => o.SellerId == sellerId);
-
-        if (onlyCreated)
-        {
+        
+        if (onlyCreated) 
             query = query.Where(o => o.State == OrderState.Created);
-        }
 
-        var orders = await query.ToListAsync();
-        return new DbResult<IReadOnlyCollection<Order>>(orders, DbResultStatus.Ok);
+        return await query.ToListAsync();
     }
 }

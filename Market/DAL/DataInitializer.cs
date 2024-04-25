@@ -1,37 +1,82 @@
 ﻿using Market.Enums;
+using Market.Helpers;
 using Market.Misc;
 using Market.Models;
 
 namespace Market.DAL;
 
-internal static class DataInitializer
+internal class DataInitializer
 {
     private static readonly Random Random = Random.Shared;
     private static readonly ProductCategory[] Categories = Enum.GetValues<ProductCategory>();
 
-    public static Product[] InitializeProducts(int count = 10)
+    private static Product[] _products;
+    private static Cart[] _carts;
+    private static User[] _users;
+    
+    public DataInitializer()
     {
-        return Enumerable.Range(1, count).Select(number =>
-            new Product
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Product-{number}",
-                Description = $"Some description for product-{number}",
-                PriceInRubles = (decimal)Random.NextDouble(100, 10000),
-                Category = Categories[Random.Next(Categories.Length)],
-                SellerId = Guid.NewGuid()
-            })
-            .ToArray();
+        InitializeData();
+    }
+    
+    public Product[] GetSeedProducts() => _products;
+    public User[] GetSeedUsers() => _users;
+    public Cart[] GetSeedCarts() => _carts;
+
+    private static void InitializeData()
+    {
+        _users = CreateUsers(10);
+        _carts = CreateCarts(_users);
+        _products = CreateProducts(_users, 100);
     }
 
-    public static Cart[] InitializeCarts()
+    private static User[] CreateUsers(int count)
     {
-        return new[]
+        var resultUsers = new User[count];
+        foreach (var index in Enumerable.Range(0, count))
         {
-            new Cart
+            var salt = Guid.NewGuid().ToString();
+            var password = string.Join("", Enumerable.Repeat(index, 3));
+            var passHash = PasswordHelper.GetPasswordHash(password, salt);
+
+            var user = new User()
             {
-                CustomerId = Guid.Parse("570AA91C-8C51-4C05-803E-E9E2B373A87D")
-            }
-        };
+                Id = Guid.NewGuid(),
+                Login = "user-" + index,
+                Name = "user name " + index,
+                Salt = salt,
+                PasswordHash = passHash,
+                IsSeller = false,
+            };
+
+            resultUsers[index] = user;
+        }
+
+        return resultUsers;
+    }
+    
+    private static Cart[] CreateCarts(IEnumerable<User> users) => 
+        users.Select(u => new Cart { CustomerId = u.Id, ProductIds = new List<Guid>() }).ToArray();
+
+    private static Product[] CreateProducts(User[] users, int totalCount)
+    {
+        var resultProducts = new Product[totalCount];
+        foreach (var index in Enumerable.Range(0, totalCount))
+        {
+            var user = users[Random.Next(0, users.Length)];
+            var product = new Product()
+            {
+                Id = Guid.NewGuid(),
+                Name = $"Product-{index}",
+                Description = $"Some description for product-{index}",
+                PriceInRubles = (decimal)Random.NextDouble(100, 10000),
+                Category = Categories[Random.Next(Categories.Length)],
+                SellerId = user.Id
+            };
+
+            resultProducts[index] = product;
+        }
+
+        return resultProducts;
     }
 }

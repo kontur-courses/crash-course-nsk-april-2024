@@ -1,8 +1,9 @@
 ﻿using Market.Enums;
+using Market.Exceptions;
 using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Market.DAL.Repositories;
+namespace Market.DAL.Repositories.Products;
 
 internal sealed class ProductsRepository
 {
@@ -13,7 +14,7 @@ internal sealed class ProductsRepository
         _context = new RepositoryContext();
     }
 
-    public async Task<DbResult<IReadOnlyCollection<Product>>> GetProductsAsync(
+    public async Task<IReadOnlyCollection<Product>> GetProductsAsync(
         string? name = null, 
         Guid? sellerId = null, 
         ProductCategory? category = null,
@@ -31,40 +32,32 @@ internal sealed class ProductsRepository
 
         var products = await query.Skip(skip).Take(take).ToListAsync();
 
-        return new DbResult<IReadOnlyCollection<Product>>(products, DbResultStatus.Ok);
+        return products;
     }
 
-    public async Task<DbResult<Product>> GetProductAsync(Guid productId)
-    {
-        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+    public Task<Product?> GetProductAsync(Guid productId) => 
+        _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
-        return product != null
-            ? new DbResult<Product>(product, DbResultStatus.Ok)
-            : new DbResult<Product>(null!, DbResultStatus.NotFound);
-    }
-
-    public async Task<DbResult> CreateProductAsync(Product product)
+    public async Task CreateProductAsync(Product product)
     {
         try
         {
             await _context.Products.AddAsync(product);
-            var res = await _context.SaveChangesAsync();
-
-            return new DbResult(DbResultStatus.Ok);
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            throw ErrorRegistry.InternalServerError();
         }
     }
 
-    public async Task<DbResult> UpdateProductAsync(Guid productId, ProductUpdateInfo updateInfo)
+    public async Task UpdateProductAsync(Guid productId, ProductUpdateInfo updateInfo)
     {
         var productToUpdate = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (productToUpdate is null)
-            return new DbResult(DbResultStatus.NotFound);
+            throw ErrorRegistry.NotFound("product", productId);
 
         if(updateInfo.Name != null)
             productToUpdate.Name = updateInfo.Name;
@@ -78,33 +71,30 @@ internal sealed class ProductsRepository
         try
         {
             await _context.SaveChangesAsync();
-            return new DbResult(DbResultStatus.Ok);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            throw ErrorRegistry.InternalServerError();
         }
     }
 
-    public async Task<DbResult> DeleteProductAsync(Guid productId)
+    public async Task DeleteProductAsync(Guid productId)
     {
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (product is null)
-            return new DbResult(DbResultStatus.NotFound);
+            throw ErrorRegistry.NotFound("product", productId);
 
         try
         {
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
-
-            return new DbResult(DbResultStatus.Ok);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            throw ErrorRegistry.InternalServerError();
         }
     }
 }
