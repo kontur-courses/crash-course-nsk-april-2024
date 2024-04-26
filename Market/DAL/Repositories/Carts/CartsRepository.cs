@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories.Carts;
 
-internal sealed class CartsRepository
+internal sealed class CartsRepository : ICartsRepository
 {
     private readonly RepositoryContext _context;
 
-    public CartsRepository()
+    public CartsRepository(RepositoryContext repositoryContext)
     {
-        _context = new RepositoryContext();
+        _context = repositoryContext;
     }
 
     public Task<Cart?> GetCartAsync(Guid customerId) =>

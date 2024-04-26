@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories.Orders;
 
-internal class OrdersRepository
+internal class OrdersRepository : IOrdersRepository
 {
     private readonly RepositoryContext _context;
 
-    public OrdersRepository()
+    public OrdersRepository(RepositoryContext repositoryContext)
     {
-        _context = new RepositoryContext();
+        _context = repositoryContext;
     }
 
     public async Task CreateOrderAsync(Order order)

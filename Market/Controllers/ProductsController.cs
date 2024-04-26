@@ -16,13 +16,13 @@ public sealed class ProductsController : ControllerBase
 {
     private readonly MainValidator _validator;
 
-    public ProductsController()
+    public ProductsController(IProductsRepository productsRepository)
     {
-        ProductsRepository = new ProductsRepository();
+        ProductsRepository = productsRepository;
         _validator = new MainValidator();
     }
 
-    private ProductsRepository ProductsRepository { get; }
+    private IProductsRepository ProductsRepository { get; }
 
     [HttpGet("{productId:guid}")]
     public async Task<ActionResult<ProductDto>> GetProductByIdAsync(Guid productId)
@@ -67,7 +67,7 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    [CheckAuthFilter]
+    [ServiceFilter(typeof(CheckAuthFilter))]
     public async Task<IActionResult> CreateProductAsync([FromBody] ProductDto product)
     {
         await _validator.Validate(product);

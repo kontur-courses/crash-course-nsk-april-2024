@@ -16,6 +16,7 @@ public class ProductDtoValidator : AbstractValidator<ProductDto>
         RuleFor(s => s.Name).Length(3, 100);
         RuleFor(s => s.Description).Length(1, 1000)
             .When(s => s.Description != null);
-        RuleFor(s => s.PriceInRubles).GreaterThan(0);
+        RuleFor(s => s.PriceInRubles).GreaterThan(0)
+            .WithMessage("Price must be more than zero");
     }
 }

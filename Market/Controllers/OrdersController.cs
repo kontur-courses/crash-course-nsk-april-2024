@@ -9,14 +9,14 @@ namespace Market.Controllers;
 
 [ApiController]
 [Route("orders")]
-public class OrdersControllers : ControllerBase
+public sealed class OrdersControllers : ControllerBase
 {
-    public OrdersControllers()
+    public OrdersControllers(IOrdersRepository ordersRepository)
     {
-        OrdersRepository = new OrdersRepository();
+        OrdersRepository = ordersRepository;
     }
 
-    private OrdersRepository OrdersRepository { get; }
+    private IOrdersRepository OrdersRepository { get; }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] OrderDto order)
