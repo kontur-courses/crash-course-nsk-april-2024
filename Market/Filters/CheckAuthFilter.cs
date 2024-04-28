@@ -7,13 +7,13 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Market.Filters;
 
-public class CheckAuthFilter : ActionFilterAttribute
+internal class CheckAuthFilter : ActionFilterAttribute, IFilterFactory
 {
-    private readonly UserAuthenticator _userAuthenticator;
+    private readonly IUserAuthenticator _userAuthenticator;
 
-    public CheckAuthFilter()
+    public CheckAuthFilter(IUserAuthenticator userAuthenticator)
     {
-        _userAuthenticator = new UserAuthenticator();
+        _userAuthenticator = userAuthenticator;
     }
 
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -70,4 +70,9 @@ public class CheckAuthFilter : ActionFilterAttribute
         claimIdentity.AddClaim(new Claim("user-id", userId.ToString()));
         context.HttpContext.User.AddIdentity(claimIdentity);
     }
+
+    public IFilterMetadata CreateInstance(IServiceProvider serviceProvider) =>
+        new CheckAuthFilter(serviceProvider.GetService<IUserAuthenticator>()!);
+
+    public bool IsReusable => true;
 }

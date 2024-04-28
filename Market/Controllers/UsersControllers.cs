@@ -6,14 +6,14 @@ namespace Market.Controllers;
 
 [ApiController]
 [Route("users")]
-public class UsersControllers : ControllerBase
+public sealed class UsersControllers : ControllerBase
 {
-    public UsersControllers()
+    public UsersControllers(IUserRepository userRepository)
     {
-        UserRepository = new UserRepository();
+        UserRepository = userRepository;
     }
 
-    private UserRepository UserRepository { get; }
+    private IUserRepository UserRepository { get; }
     
     [HttpPost]
     public async Task<ActionResult<Guid>> CreateUser([FromBody] CreateUserRequestDto userInfo)

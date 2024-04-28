@@ -3,13 +3,13 @@ using Market.Helpers;
 
 namespace Market.Services;
 
-public class UserAuthenticator
+internal class UserAuthenticator : IUserAuthenticator
 {
-    private readonly UserRepository _userRepository;
+    private readonly IUserRepository _userRepository;
 
-    public UserAuthenticator()
+    public UserAuthenticator(IUserRepository userRepository)
     {
-        _userRepository = new UserRepository();
+        _userRepository = userRepository;
     }
     public async Task<Guid?> AuthenticateUser(string login, string password)
     {

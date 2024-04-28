@@ -7,14 +7,14 @@ namespace Market.Controllers;
 
 [ApiController]
 [Route("customers/{customerId:guid}/cart")]
-public class CartsControllers : ControllerBase
+public sealed class CartsControllers : ControllerBase
 {
-    public CartsControllers()
+    public CartsControllers(ICartsRepository cartsRepository)
     {
-        CartsRepository = new CartsRepository();
+        CartsRepository = cartsRepository;
     }
 
-    private CartsRepository CartsRepository { get; }
+    private ICartsRepository CartsRepository { get; }
     
     [HttpGet]
     public async Task<ActionResult<Cart>> GetCartAsync([FromRoute] Guid customerId)

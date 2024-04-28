@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories.Products;
 
-internal sealed class ProductsRepository
+internal sealed class ProductsRepository : IProductsRepository
 {
     private readonly RepositoryContext _context;
 
-    public ProductsRepository()
+    public ProductsRepository(RepositoryContext repositoryContext)
     {
-        _context = new RepositoryContext();
+        _context = repositoryContext;
     }
 
     public async Task<IReadOnlyCollection<Product>> GetProductsAsync(

@@ -6,15 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories.Users;
 
-internal sealed class UserRepository
+internal sealed class UserRepository : IUserRepository
 {
     private static MD5 _md5 = MD5.Create();
 
     private readonly RepositoryContext _context;
 
-    public UserRepository()
+    public UserRepository(RepositoryContext repositoryContext)
     {
-        _context = new RepositoryContext();
+        _context = repositoryContext;
     }
 
     public async Task<Guid> CreateUser(string name, string login, string password)
